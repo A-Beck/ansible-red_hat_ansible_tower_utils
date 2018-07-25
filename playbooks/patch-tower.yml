@@ -1,0 +1,47 @@
+---
+
+#  Runs patching procedure on Ansible Tower Nodes. This needs to be run as root
+#  This procedure will require downtime unconditionally
+
+- name: Tower | Patching | Run OS Patching Procedures on Ansible Tower Nodes
+  hosts: tower:database
+  vars:
+    postgres_port: 5432
+  tasks:
+
+    - name: Tower | Patching | Stop Ansible Tower Application
+      command: /usr/bin/ansible-tower-service stop
+      when: "'tower' in group_names"
+
+    - name: Tower | Patching | Update non-ansible packages on all hosts
+      yum:
+        name: '*'
+        state: 'latest'
+        #  excluding packages related to Ansible Tower Application
+        exclude: ansible*,nginx*,postgresql*,rabbitmq*
+
+    - name: Tower | Patching | Include tasks for host reboot
+      include_tasks: tasks/host-reboot.yml
+
+    # unconditionally restart service in case dependent packages were updated
+    - name: Tower | Patching | Restart Ansible Tower Application
+      command: /usr/bin/ansible-tower-service restart
+      when: "'tower' in group_names"
+
+    - name: Tower | Patching | Check that DB is up after patching
+      wait_for:
+        port: "{{ postgres_port }}"
+        state: started
+        timeout: 60
+        msg: "Postgres not listening on port [{{ postgres_port }}]. Investigate why Postgres is down"
+      when: "'database' in group_names"
+
+    - name: Tower | Patching | Check that Tower API is repsonsive after update
+      uri:
+        url: "http://{{ ansible_hostname }}/api/v2/ping"
+        follow_redirects: all
+        validate_certs: no
+      retries: 5
+      delay: 5
+      when: "'tower' in group_names"
+

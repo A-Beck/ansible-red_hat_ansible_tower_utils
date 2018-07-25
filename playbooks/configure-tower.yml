@@ -1,0 +1,29 @@
+---
+
+- name: Tower | Configure | Enforce config on Ansible Tower Nodes
+  hosts: tower
+  gather_facts: no
+  tasks:
+
+    #  Automate fix in this article:
+    #+ https://access.redhat.com/solutions/3228681
+    - name: Tower | Configure | fix path permission bug    
+      file:
+        path: '/var/lib/awx/venv/awx/lib/python2.7/site-packages/awx/plugins/inventory'
+        recurse: yes
+        state: directory
+        owner: awx
+        group: awx
+
+    - name:  Tower | Configure | Template Ansible Tower Config Files
+      template:
+        owner: awx
+        group: awx
+        src: "{{ item['src'] }}"
+        dest: "{{ item['dest'] }}"
+        mode: "{{ item['mode'] | default('0640') }}"
+      loop:
+        - src: settings.py
+          dest: /etc/tower/settings.py
+
+- import_playbook: rolling_ansible_tower_restart.yml

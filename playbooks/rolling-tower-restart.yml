@@ -1,0 +1,21 @@
+---
+
+# Execute a rolling reboot of all non-db Ansible Tower nodes
+# Intended for Clustered Tower Installation
+
+- name: Tower | Rolling reboot of all Tower Nodes
+  hosts: tower
+  serial: 1
+  tasks:
+
+    - name: Tower | Rolling Reboot | Run restart command
+      command: /usr/bin/ansible-tower-service restart
+
+    - name: Tower | Rolling Reboot  | Ensure Tower API is repsonsive after reboot
+      uri:
+        url: "http://{{ ansible_hostname }}/api/v2/ping"
+        follow_redirects: all
+        validate_certs: no
+      retries: 5
+      delay: 5
+

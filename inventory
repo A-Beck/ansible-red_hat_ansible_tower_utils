@@ -1,0 +1,31 @@
+# Example inventory file
+
+[tower]
+tower001.example.com
+tower002.example.com
+tower003.example.com
+
+[database]
+tower004.example.com
+
+[all:vars]
+admin_password='CHANGEME'
+
+pg_host=''
+pg_port=''
+
+pg_database='awx'
+pg_username='awx'
+pg_password='CHANGEME'
+
+rabbitmq_port=5672
+rabbitmq_vhost=tower
+rabbitmq_username=tower
+rabbitmq_password='CHANGEME'
+rabbitmq_cookie=CHANGEME
+
+# Needs to be true for fqdns and ip addresses
+rabbitmq_use_long_name=true
+
+# Ensure that ansible is updated with tower updates
+upgrade_ansible_with_tower=true
